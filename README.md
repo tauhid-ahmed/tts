@@ -1,12 +1,8 @@
-# Next.js Project Template
-
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app). This template provides a robust starting point for developing Next.js or React applications, including e-commerce solutions.
-
 ## Prerequisites
 
 Before you begin, ensure you have met the following requirements:
 
-- **Node.js**: Install [Node.js](https://nodejs.org/) (v14.0.0 or higher) and [npm](https://www.npmjs.com/) or use an alternative package manager like [Yarn](https://yarnpkg.com/) or [pnpm](https://pnpm.io/).
+- **Vite React**: Install [Node.js](https://nodejs.org/) (v14.0.0 or higher) and [npm](https://www.npmjs.com/) or use an alternative package manager like [Yarn](https://yarnpkg.com/) or [pnpm](https://pnpm.io/).
 - **Git**: Install [Git](https://git-scm.com/) for version control.
 
 ## Getting Started
@@ -101,3 +97,7 @@ yarn start
 # or
 pnpm start
 ```
+
+### Read more
+
+[See Instruction](./instructions/README.md)
