@@ -1,44 +1,59 @@
 import { useEffect, useState, useRef } from "react";
 import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 import { uploadAIVoice, generateAIVoice } from "./lib/upload";
+import { LoaderIcon } from "./components/Icons";
+import "react-toastify/dist/ReactToastify.css";
 
 const PLAY = "PLAY";
 const STOP = "STOP";
 
 function App() {
-  const [status, setStatus] = useState(STOP);
-  const [error, setError] = useState(null);
-  const [uploadStatus, setUploadStatus] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const audio = useRef([]);
+  const [state, setState] = useState({
+    status: STOP,
+    loading: false,
+    error: null,
+  });
+
+  const audioRef = useRef([]);
   const recorderRef = useRef(null);
   const streamRef = useRef(null);
 
   const notify = (message) => toast(message);
 
   const handleListening = () =>
-    setStatus((status) => (status === PLAY ? STOP : PLAY));
+    setState((prevState) => ({
+      ...prevState,
+      status: prevState.status === PLAY ? STOP : PLAY,
+    }));
 
   const uploadAudio = async (blob) => {
-    setLoading(true);
+    setState((prevState) => ({ ...prevState, loading: true }));
     notify("Uploading audio... Please wait.");
     const file = new File([blob], "audio.mp3", { type: blob.type });
 
     try {
       const audio = await generateAIVoice(file);
       await uploadAIVoice(audio);
-      setUploadStatus("Success");
+      setState((prevState) => ({
+        ...prevState,
+        loading: false,
+        error: null,
+      }));
       notify("Audio uploaded successfully!");
     } catch (error) {
-      notify("Error during audio upload.\nPlease try again.");
-    } finally {
-      setLoading(false);
+      setState((prevState) => ({
+        ...prevState,
+        loading: false,
+        error: "Error during audio upload. Please try again.",
+      }));
+      notify("Error during audio upload. Please try again.");
     }
   };
 
   useEffect(() => {
     const processing = async () => {
+      const { status } = state;
+
       if (status === PLAY) {
         try {
           const stream = await navigator.mediaDevices.getUserMedia({
@@ -48,28 +63,37 @@ function App() {
           recorderRef.current = new MediaRecorder(stream);
 
           recorderRef.current.ondataavailable = (event) => {
-            audio.current.push(event.data);
+            audioRef.current.push(event.data);
           };
 
           recorderRef.current.onstop = async () => {
-            const audioBlob = new Blob(audio.current, {
+            const audioBlob = new Blob(audioRef.current, {
               type: "audio/mp3",
             });
 
             if (audioBlob.size > 0) {
               await uploadAudio(audioBlob);
-              setError(null);
+              setState((prevState) => ({ ...prevState, error: null }));
             } else {
-              setError("No audio data captured");
+              const errorMessage = "No audio data captured";
+              setState((prevState) => ({
+                ...prevState,
+                error: errorMessage,
+              }));
+              notify(errorMessage);
             }
           };
 
           recorderRef.current.start();
-          audio.current = [];
+          audioRef.current = [];
         } catch (error) {
-          setError(
-            "Failed to start recording. Please ensure microphone access."
-          );
+          const errorMessage =
+            "Failed to start recording. Please ensure microphone access.";
+          setState((prevState) => ({
+            ...prevState,
+            error: errorMessage,
+          }));
+          notify(errorMessage);
         }
       } else if (status === STOP && recorderRef.current) {
         recorderRef.current.stop();
@@ -89,7 +113,9 @@ function App() {
         streamRef.current.getTracks().forEach((track) => track.stop());
       }
     };
-  }, [status]);
+  }, [state.status]);
+
+  const { status, loading } = state;
 
   return (
     <>
@@ -107,7 +133,7 @@ function App() {
           >
             {loading ? (
               <span className="absolute inset-0 flex items-center justify-center animate-loading">
-                <Loader />
+                <LoaderIcon />
               </span>
             ) : (
               <span className="absolute inset-0 flex items-center justify-center">
@@ -123,17 +149,3 @@ function App() {
 }
 
 export default App;
-
-function Loader(props) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      {...props}
-      className="w-7 h-7 backdrop-filter text-purple-50"
-    >
-      <path d="M18.364 5.636L16.95 7.05A7 7 0 1019 12h2a9 9 0 11-2.636-6.364z" />
-    </svg>
-  );
-}
